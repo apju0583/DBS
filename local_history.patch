@@ -1,0 +1,54 @@
+Index: src/Main.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/Main.java b/src/Main.java
+--- a/src/Main.java	
++++ b/src/Main.java	(date 1698752566844)
+@@ -17,7 +17,7 @@
+                 System.out.println("메뉴를 선택하세요:");
+                 System.out.println("1. 데이터 삽입");
+                 System.out.println("2. 데이터 삭제");
+-                System. out.println("3. 데이터 검색");
++                System.out.println("3. 데이터 검색");
+                 System.out.println("4. 종료");
+                 System.out.print("선택: ");
+ 
+@@ -40,7 +40,9 @@
+                     int bookid = scanner.nextInt();
+                     deleteData(con, "Book", bookid);
+                 } else if (choice == 3) {
+-                    searchAndDisplayData(con, "Book");
++                    System.out.print("검색할 책 제목을 입력하세요: ");
++                    String searchTitle = scanner.nextLine();
++                    searchAndDisplayData(con, "Book", searchTitle);
+                 } else if (choice == 4) {
+                     break; // 종료
+                 } else {
+@@ -77,13 +79,19 @@
+     }
+ 
+     // 데이터 검색 및 출력
+-    public static void searchAndDisplayData(Connection con, String tableName) {
++    public static void searchAndDisplayData(Connection con, String tableName, String searchTitle) {
+         try {
+-            Statement stmt = con.createStatement();
+-            ResultSet rs = stmt.executeQuery("SELECT * FROM " + tableName);
+-            System.out.println("Data in " + tableName + ":");
+-            while (rs.next()) {
+-                System.out.println(rs.getInt("bookid") + " " + rs.getString("bookname") + " " + rs.getString("publisher") + " " + rs.getDouble("price"));
++            String query = "SELECT bookid, publisher, price FROM " + tableName + " WHERE bookname = ?";
++            PreparedStatement pstmt = con.prepareStatement(query);
++            pstmt.setString(1, searchTitle);
++            ResultSet rs = pstmt.executeQuery();
++            if (rs.next()) {
++                System.out.println("Data in " + tableName + " for book title '" + searchTitle + "':");
++                System.out.println("BookID: " + rs.getInt("bookid"));
++                System.out.println("Publisher: " + rs.getString("publisher"));
++                System.out.println("Price: " + rs.getDouble("price"));
++            } else {
++                System.out.println("해당 데이터가 없습니다.");
+             }
+         } catch (SQLException e) {
+             e.printStackTrace();
