@@ -25,12 +25,13 @@ public class Main
                 System.out.println("1. 플레이어 로그인");
                 System.out.println("2. 플레이어 정보 확인");
                 System.out.println("3. 플레이어 인벤토리 확인");
-                System.out.println("4. 몬스터 도감 확인");
-                System.out.println("5. NPC 도감 확인");
-                System.out.println("6. 아이템 구매");
-                System.out.println("7. 아이템 판매");
-                System.out.println("8. 신규 플레이어 생성");
-                System.out.println("9. 플레이어 삭제");
+                System.out.println("4. 아이템 도감 확인");
+                System.out.println("5. 몬스터 도감 확인");
+                System.out.println("6. NPC 도감 확인");
+                System.out.println("7. 아이템 구매");
+                System.out.println("8. 아이템 판매");
+                System.out.println("9. 신규 플레이어 생성");
+                System.out.println("10. 플레이어 삭제");
                 System.out.println("0. 로그아웃");
                 System.out.println("99. 프로그램 종료");
                 System.out.println("----------------------------------------");
@@ -41,7 +42,7 @@ public class Main
 
                 if(loggedInPlayerId == null)
                 {
-                    if (choice >= 2 && choice <= 7)
+                    if (choice >= 2 && choice <= 8)
                     {
                         System.out.println("권한이 없습니다. 로그인을 해주십시오.");
                         continue;
@@ -74,14 +75,14 @@ public class Main
 
                 else if (choice == 5)
                 {
-
-                    break;
+                    checkMonsterList(con, scanner);
+                    continue;
                 }
 
                 else if (choice == 6)
                 {
-
-                    break;
+                    checkNPCList(con, scanner);
+                    continue;
                 }
 
                 else if (choice == 7)
@@ -91,6 +92,12 @@ public class Main
                 }
 
                 else if (choice == 8)
+                {
+
+                    break;
+                }
+
+                else if (choice == 9)
                 {
                     if (loggedInPlayerId != null)
                     {
@@ -102,7 +109,7 @@ public class Main
                     continue;
                 }
 
-                else if (choice == 9)
+                else if (choice == 10)
                 {
                     if (loggedInPlayerId != null)
                     {
@@ -232,7 +239,139 @@ public class Main
         }
     }
 
-    //8번 메뉴
+    //5번 메뉴
+    private static void checkMonsterList(Connection con, Scanner scanner) throws SQLException
+    {
+        System.out.println("몬스터 도감");
+        System.out.println("1. 모든 몬스터 도감 열기");
+        System.out.println("2. 몬스터 유형별 검색");
+        System.out.print("원하는 메뉴를 입력하세요 : ");
+
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (choice)
+        {
+            case 1:
+                printAllMonsters(con);
+                break;
+
+            case 2:
+                printMonstersByType(con, scanner);
+                break;
+
+            default:
+                System.out.println("잘못된 메뉴 입력입니다.");
+                break;
+        }
+    }
+
+    private static void printAllMonsters(Connection con) throws SQLException
+    {
+        String query = "SELECT * FROM Enemy ORDER BY FIELD(type, '근거리', '원거리', '보스 몬스터'), hp ASC";
+        try (PreparedStatement monsterInfo = con.prepareStatement(query);
+             ResultSet rs = monsterInfo.executeQuery())
+        {
+            while (rs.next())
+            {
+                System.out.print("이름 : " + rs.getString("name"));
+                System.out.print(" | 체력 : " + rs.getInt("hp"));
+                System.out.print(" | 공격력 : " + rs.getInt("attack_power"));
+                System.out.println(" | 유형 : " + rs.getString("type"));
+            }
+        }
+    }
+
+    private static void printMonstersByType(Connection con, Scanner scanner) throws SQLException
+    {
+        System.out.print("검색하려는 유형을 입력해주세요 (근거리, 원거리, 보스 몬스터) : ");
+        String monsterType = scanner.nextLine();
+
+        String query = "SELECT * FROM Enemy WHERE type = ? ORDER BY hp ASC";
+
+        try (PreparedStatement monsterInfoByType = con.prepareStatement(query))
+        {
+            monsterInfoByType.setString(1, monsterType);
+            try (ResultSet rs = monsterInfoByType.executeQuery())
+            {
+                System.out.println("Monsters of Type " + monsterType + ":");
+                while (rs.next())
+                {
+                    System.out.print("이름 : " + rs.getString("name"));
+                    System.out.print(" | 체력 : " + rs.getInt("hp"));
+                    System.out.print(" | 공격력 : " + rs.getInt("attack_power"));
+                    System.out.println(" | 유형 : " + rs.getString("type"));
+                }
+            }
+        }
+    }
+
+    //6번 메뉴
+    private static void checkNPCList(Connection con, Scanner scanner) throws SQLException
+    {
+        System.out.println("NPC 도감");
+        System.out.println("1. 모든 NPC 도감 열기");
+        System.out.println("2. NPC 유형별 검색");
+        System.out.print("원하는 메뉴를 입력하세요 : ");
+
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (choice)
+        {
+            case 1:
+                printAllNPCs(con);
+                break;
+
+            case 2:
+                printNPCsByType(con, scanner);
+                break;
+
+            default:
+                System.out.println("잘못된 메뉴 입력입니다.");
+                break;
+        }
+    }
+
+    private static void printAllNPCs(Connection con) throws SQLException
+    {
+        String query = "SELECT * FROM NPC ORDER BY FIELD(type, '상인', '퀘스트', '대장장이'), LENGTH(name), name";
+
+        try (PreparedStatement npcInfo = con.prepareStatement(query);
+             ResultSet rs = npcInfo.executeQuery())
+        {
+            while (rs.next())
+            {
+                System.out.print("이름 : " + rs.getString("name"));
+                System.out.println(" | 유형 : " + rs.getString("type"));
+            }
+        }
+    }
+
+    private static void printNPCsByType(Connection con, Scanner scanner) throws SQLException
+    {
+        System.out.print("검색하려는 유형을 입력해주세요 (상인, 퀘스트, 대장장이) : ");
+        String npcType = scanner.nextLine();
+
+        String query = "SELECT * FROM NPC WHERE type = ? ORDER BY LENGTH(name), name";
+
+        try (PreparedStatement npcInfoByType = con.prepareStatement(query))
+        {
+            npcInfoByType.setString(1, npcType);
+            try (ResultSet rs = npcInfoByType.executeQuery())
+            {
+                System.out.println("NPC 유형 " + npcType + "의 목록:");
+
+                while (rs.next())
+                {
+                    System.out.print("이름 : " + rs.getString("name"));
+                    System.out.println(" | 유형 : " + rs.getString("type"));
+                }
+            }
+        }
+    }
+
+    //9번 메뉴
     private static void createNewPlayer(Connection con, Scanner scanner) throws SQLException
     {
         System.out.print("생성할 플레이어의 ID를 입력하세요 : ");
@@ -275,7 +414,7 @@ public class Main
         }
     }
 
-    //9번 메뉴
+    //10번 메뉴
     private static void deletePlayer(Connection con, Scanner scanner) throws SQLException
     {
         System.out.print("삭제할 플레이어의 ID를 입력하세요 : ");
