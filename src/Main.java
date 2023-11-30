@@ -69,8 +69,8 @@ public class Main
 
                 else if (choice == 4)
                 {
-
-                    break;
+                    checkItemList(con, scanner);
+                    continue;
                 }
 
                 else if (choice == 5)
@@ -234,6 +234,72 @@ public class Main
                 else
                 {
                     System.out.println("플레이어 정보를 찾지 못하였습니다.");
+                }
+            }
+        }
+    }
+
+    //4번 메뉴
+    private static void checkItemList(Connection con, Scanner scanner) throws SQLException
+    {
+        System.out.println("아이템 도감");
+        System.out.println("1. 모든 아이템 도감 열기");
+        System.out.println("2. 등급별 아이템 검색");
+        System.out.print("원하는 메뉴를 입력하세요 : ");
+
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (choice)
+        {
+            case 1:
+                printAllItems(con);
+                break;
+
+            case 2:
+                printItemsByRank(con, scanner);
+                break;
+
+            default:
+                System.out.println("잘못된 메뉴 입력입니다.");
+                break;
+        }
+    }
+
+    private static void printAllItems(Connection con) throws SQLException
+    {
+        String query = "SELECT * FROM Item ORDER BY FIELD(rank, '신화', '전설', '영웅', '고급', '일반'), LENGTH(name), name";
+
+        try (PreparedStatement itemInfo = con.prepareStatement(query);
+             ResultSet rs = itemInfo.executeQuery())
+        {
+            while (rs.next())
+            {
+                System.out.print("이름 : " + rs.getString("name"));
+                System.out.print(" | 등급 : " + rs.getString("rank"));
+                System.out.println(" | 설명 : " + rs.getString("description"));
+            }
+        }
+    }
+
+    private static void printItemsByRank(Connection con, Scanner scanner) throws SQLException
+    {
+        System.out.print("검색하려는 등급을 입력해주세요 (신화, 전설, 영웅, 고급, 일반) : ");
+        String itemRank = scanner.nextLine();
+
+        String query = "SELECT * FROM Item WHERE rank = ? ORDER BY LENGTH(name), name";
+
+        try (PreparedStatement itemInfoByRank = con.prepareStatement(query))
+        {
+            itemInfoByRank.setString(1, itemRank);
+
+            try (ResultSet rs = itemInfoByRank.executeQuery())
+            {
+                System.out.println(itemRank + " 등급의 아이템");
+                while (rs.next())
+                {
+                    System.out.print("이름 : " + rs.getString("name"));
+                    System.out.println(" | 설명 : " + rs.getString("description"));
                 }
             }
         }
