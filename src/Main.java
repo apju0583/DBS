@@ -408,7 +408,7 @@ public class Main
             monsterInfoByType.setString(1, monsterType);
             try (ResultSet rs = monsterInfoByType.executeQuery())
             {
-                System.out.println("Monsters of Type " + monsterType + ":");
+                System.out.println(monsterType + " 유형 몬스터 :");
                 while (rs.next())
                 {
                     System.out.print("이름 : " + rs.getString("name"));
