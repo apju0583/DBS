@@ -22,17 +22,17 @@ public class Main
                 System.out.println("2D RoguleLike Game Databases");
                 System.out.println("현재 접속중인 플레이어 : " + (loggedInPlayerId != null ? loggedInPlayerId : "없음"));
                 System.out.println("메뉴를 선택하세요:");
+                System.out.println("0. 로그아웃");
                 System.out.println("1. 플레이어 로그인");
                 System.out.println("2. 플레이어 정보 확인");
                 System.out.println("3. 플레이어 인벤토리 확인");
-                System.out.println("4. 아이템 도감 확인");
-                System.out.println("5. 몬스터 도감 확인");
-                System.out.println("6. NPC 도감 확인");
-                System.out.println("7. 아이템 구매");
-                System.out.println("8. 아이템 판매");
+                System.out.println("4. 업적 목록 확인");
+                System.out.println("5. 아이템 도감 확인");
+                System.out.println("6. 몬스터 도감 확인");
+                System.out.println("7. NPC 도감 확인");
+                System.out.println("8. 아이템 구매 & 판매");
                 System.out.println("9. 신규 플레이어 생성");
                 System.out.println("10. 플레이어 삭제");
-                System.out.println("0. 로그아웃");
                 System.out.println("99. 프로그램 종료");
                 System.out.println("----------------------------------------");
                 System.out.print("선택: ");
@@ -49,7 +49,23 @@ public class Main
                     }
                 }
 
-                if (choice == 1)
+                if (choice == 0)
+                {
+                    if (loggedInPlayerId != null)
+                    {
+                        System.out.println("로그아웃 성공 !");
+                        loggedInPlayerId = null;
+                    }
+
+                    else
+                    {
+                        System.out.println("현재 접속중인 플레이어가 없습니다.");
+                    }
+
+                    continue;
+                }
+
+                else if (choice == 1)
                 {
                     playerLogin(con, scanner);
                     continue;
@@ -63,38 +79,38 @@ public class Main
 
                 else if (choice == 3)
                 {
-
-                    break;
+                    checkPlayerInventory(con, scanner);
+                    continue;
                 }
 
                 else if (choice == 4)
                 {
-                    checkItemList(con, scanner);
+                    checkAchievementList(con);
                     continue;
                 }
 
                 else if (choice == 5)
                 {
-                    checkMonsterList(con, scanner);
+                    checkItemList(con, scanner);
                     continue;
                 }
 
                 else if (choice == 6)
                 {
-                    checkNPCList(con, scanner);
+                    checkMonsterList(con, scanner);
                     continue;
                 }
 
                 else if (choice == 7)
                 {
-
-                    break;
+                    checkNPCList(con, scanner);
+                    continue;
                 }
 
                 else if (choice == 8)
                 {
-
-                    break;
+                    itemBuySell(con, scanner);
+                    continue;
                 }
 
                 else if (choice == 9)
@@ -118,22 +134,6 @@ public class Main
                     }
 
                     deletePlayer(con, scanner);
-                    continue;
-                }
-
-                else if (choice == 0)
-                {
-                    if (loggedInPlayerId != null)
-                    {
-                        System.out.println("로그아웃 성공 !");
-                        loggedInPlayerId = null;
-                    }
-
-                    else
-                    {
-                        System.out.println("현재 접속중인 플레이어가 없습니다.");
-                    }
-
                     continue;
                 }
 
@@ -239,7 +239,55 @@ public class Main
         }
     }
 
+    //3번메뉴
+    private static void checkPlayerInventory(Connection con, Scanner scanner) throws SQLException
+    {
+        String query = "SELECT items, quantity, price FROM Inventory WHERE player_id = ? ORDER BY price DESC";
+
+        try (PreparedStatement inventoryInfo = con.prepareStatement(query))
+        {
+            inventoryInfo.setString(1, loggedInPlayerId);
+
+            try (ResultSet rs = inventoryInfo.executeQuery())
+            {
+                System.out.println(loggedInPlayerId + " 의 인벤토리");
+
+                while (rs.next())
+                {
+                    System.out.print("아이템: " + rs.getString("items"));
+                    System.out.print(" | 수량: " + rs.getInt("quantity"));
+                    System.out.println(" | 가격: " + rs.getInt("price"));
+                }
+            }
+        }
+    }
+
     //4번 메뉴
+    private static void checkAchievementList(Connection con) throws SQLException
+    {
+        String query = "SELECT achievement_num, achievement_name, description, reward FROM Achievement ORDER BY achievement_num";
+
+        try (PreparedStatement achievementInfo = con.prepareStatement(query);
+             ResultSet rs = achievementInfo.executeQuery())
+        {
+            System.out.println("업적 목록");
+
+            while (rs.next())
+            {
+                int achievementNum = rs.getInt("achievement_num");
+                String achievementName = rs.getString("achievement_name");
+                String description = rs.getString("description");
+                String reward = rs.getString("reward");
+
+                System.out.print(achievementNum + ". ");
+                System.out.print(achievementName + " -->");
+                System.out.print(" 달성 조건 : " + description);
+                System.out.println(" | 보상 : " + reward);
+            }
+        }
+    }
+
+    //5번 메뉴
     private static void checkItemList(Connection con, Scanner scanner) throws SQLException
     {
         System.out.println("아이템 도감");
@@ -305,7 +353,7 @@ public class Main
         }
     }
 
-    //5번 메뉴
+    //6번 메뉴
     private static void checkMonsterList(Connection con, Scanner scanner) throws SQLException
     {
         System.out.println("몬스터 도감");
@@ -372,7 +420,7 @@ public class Main
         }
     }
 
-    //6번 메뉴
+    //7번 메뉴
     private static void checkNPCList(Connection con, Scanner scanner) throws SQLException
     {
         System.out.println("NPC 도감");
@@ -434,6 +482,299 @@ public class Main
                     System.out.println(" | 유형 : " + rs.getString("type"));
                 }
             }
+        }
+    }
+
+    //8번 메뉴
+    private static void itemBuySell(Connection con, Scanner scanner) throws SQLException
+    {
+        System.out.println("1. 아이템 구매");
+        System.out.println("2. 아이템 판매");
+        System.out.print("원하는 메뉴를 선택하세요: ");
+
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (choice)
+        {
+            case 1:
+                buyItem(con, scanner);
+                break;
+
+            case 2:
+                sellItem(con, scanner);
+                break;
+
+            default:
+                System.out.println("잘못된 메뉴 번호입니다. 다시 입력해주세요.");
+                break;
+        }
+    }
+
+    private static void buyItem(Connection con, Scanner scanner) throws SQLException
+    {
+        String query = "SELECT * FROM Item WHERE rank IN ('고급', '일반') ORDER BY gold DESC";
+
+        try (PreparedStatement itemInfo = con.prepareStatement(query);
+             ResultSet rs = itemInfo.executeQuery()) {
+            System.out.println("-------------");
+
+            while (rs.next())
+            {
+                System.out.println(rs.getString("name") + " " + rs.getInt("gold") + "g");
+            }
+            System.out.println("-------------");
+        }
+
+        System.out.print("구매할 아이템의 이름을 입력하세요: ");
+        String itemName = scanner.nextLine();
+
+        System.out.print("구매할 수량을 입력하세요: ");
+        int quantity = scanner.nextInt();
+        scanner.nextLine();
+
+        int totalPrice = calculatePrice(con, itemName, quantity);
+
+        if (checkGold(con, totalPrice))
+        {
+            int nowGold = UpdateBuy(con, totalPrice, loggedInPlayerId, itemName, quantity);
+            System.out.println("아이템을 성공적으로 구매했습니다! 현재 골드 : " + nowGold + "g");
+        }
+
+        else
+        {
+            System.out.println("골드가 부족합니다. 구매에 실패했습니다.");
+        }
+    }
+
+    private static void sellItem(Connection con, Scanner scanner) throws SQLException
+    {
+        checkPlayerInventory(con, scanner);
+
+        System.out.print("판매할 아이템의 이름을 입력하세요: ");
+        String itemName = scanner.nextLine();
+
+        System.out.print("판매할 수량을 입력하세요: ");
+        int quantity = scanner.nextInt();
+        scanner.nextLine();
+
+        int totalPrice = calculatePrice(con, itemName, quantity);
+
+        if (checkQuantity(con, loggedInPlayerId, itemName, quantity))
+        {
+            int nowGold = UpdateSell(con, totalPrice, loggedInPlayerId, itemName, quantity);
+            System.out.println("아이템을 성공적으로 판매했습니다! 현재 골드 : " + nowGold + "g");
+        }
+
+        else
+        {
+            System.out.println("아이템 수량이 부족합니다. 판매에 실패했습니다.");
+        }
+    }
+
+    private static int calculatePrice(Connection con, String itemName, int quantity) throws SQLException
+    {
+        String query = "SELECT gold FROM Item WHERE name = ?";
+
+        try (PreparedStatement buyItem = con.prepareStatement(query))
+        {
+            buyItem.setString(1, itemName);
+
+            try (ResultSet rs = buyItem.executeQuery())
+            {
+                if (rs.next())
+                {
+                    int itemGold = rs.getInt("gold");
+                    return itemGold * quantity;
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    private static boolean checkGold(Connection con, int totalPrice) throws SQLException
+    {
+        String query = "SELECT gold FROM Player WHERE player_id = ?";
+
+        try (PreparedStatement gold = con.prepareStatement(query))
+        {
+            gold.setString(1, loggedInPlayerId);
+
+            try (ResultSet rs = gold.executeQuery())
+            {
+                if (rs.next())
+                {
+                    int playerGold = rs.getInt("gold");
+                    return playerGold >= totalPrice;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean checkQuantity(Connection con, String playerId, String itemName, int requestedQuantity) throws SQLException
+    {
+        String query = "SELECT quantity FROM Inventory WHERE player_id = ? AND items = ?";
+
+        try (PreparedStatement checkQuantityStmt = con.prepareStatement(query))
+        {
+            checkQuantityStmt.setString(1, playerId);
+            checkQuantityStmt.setString(2, itemName);
+
+            try (ResultSet rs = checkQuantityStmt.executeQuery())
+            {
+                if (rs.next())
+                {
+                    int availableQuantity = rs.getInt("quantity");
+                    return availableQuantity >= requestedQuantity;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static int getPlayerGold(Connection con, String playerId) throws SQLException
+    {
+        String query = "SELECT gold FROM Player WHERE player_id = ?";
+
+        try (PreparedStatement stmt = con.prepareStatement(query))
+        {
+            stmt.setString(1, playerId);
+
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                if (rs.next())
+                {
+                    return rs.getInt("gold");
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    private static int UpdateBuy(Connection con, int Price, String playerId, String itemName, int quantity) throws SQLException
+    {
+        String deductGoldQuery = "UPDATE Player SET gold = gold - ? WHERE player_id = ?";
+
+        try (PreparedStatement deductGoldStmt = con.prepareStatement(deductGoldQuery))
+        {
+            deductGoldStmt.setInt(1, Price);
+            deductGoldStmt.setString(2, playerId);
+            deductGoldStmt.executeUpdate();
+        }
+
+        String checkItemQuery = "SELECT * FROM Inventory WHERE player_id = ? AND items = ?";
+
+        try (PreparedStatement checkItemStmt = con.prepareStatement(checkItemQuery))
+        {
+            checkItemStmt.setString(1, playerId);
+            checkItemStmt.setString(2, itemName);
+
+            try (ResultSet rs = checkItemStmt.executeQuery())
+            {
+                if (rs.next())
+                {
+                    int existingQuantity = rs.getInt("quantity");
+                    int price = rs.getInt("price");
+
+                    String updateItemQuery = "UPDATE Inventory SET quantity = ?, price = ? " +
+                            "WHERE player_id = ? AND items = ?";
+
+                    try (PreparedStatement updateItemStmt = con.prepareStatement(updateItemQuery))
+                    {
+                        updateItemStmt.setInt(1, existingQuantity + quantity);
+                        updateItemStmt.setInt(2, price);
+                        updateItemStmt.setString(3, playerId);
+                        updateItemStmt.setString(4, itemName);
+                        updateItemStmt.executeUpdate();
+                    }
+                }
+
+                else
+                {
+                    String addItemQuery = "INSERT INTO Inventory (player_id, items, quantity, price) " +
+                            "VALUES (?, ?, ?, ?)";
+
+                    try (PreparedStatement addItemStmt = con.prepareStatement(addItemQuery))
+                    {
+                        addItemStmt.setString(1, playerId);
+                        addItemStmt.setString(2, itemName);
+                        addItemStmt.setInt(3, quantity);
+                        addItemStmt.setInt(4, Price);
+                        addItemStmt.executeUpdate();
+                    }
+                }
+            }
+        }
+
+        return getPlayerGold(con, playerId);
+    }
+
+    private static int UpdateSell(Connection con, int totalPrice, String playerId, String itemName, int soldQuantity) throws SQLException
+    {
+        String updateQuery = "UPDATE Inventory SET quantity = quantity - ? WHERE player_id = ? AND items = ?";
+
+        try (PreparedStatement updateStmt = con.prepareStatement(updateQuery))
+        {
+            updateStmt.setInt(1, soldQuantity);
+            updateStmt.setString(2, playerId);
+            updateStmt.setString(3, itemName);
+            updateStmt.executeUpdate();
+        }
+
+        int remainingQuantity = getRemainingQuantity(con, playerId, itemName);
+
+        if (remainingQuantity == 0)
+        {
+            deleteItemFromInventory(con, playerId, itemName);
+        }
+
+        String addGoldQuery = "UPDATE Player SET gold = gold + ? WHERE player_id = ?";
+
+        try (PreparedStatement addGoldStmt = con.prepareStatement(addGoldQuery))
+        {
+            addGoldStmt.setInt(1, totalPrice);
+            addGoldStmt.setString(2, playerId);
+            addGoldStmt.executeUpdate();
+        }
+
+        return getPlayerGold(con, playerId);
+    }
+
+    private static int getRemainingQuantity(Connection con, String playerId, String itemName) throws SQLException
+    {
+        String query = "SELECT quantity FROM Inventory WHERE player_id = ? AND items = ?";
+
+        try (PreparedStatement stmt = con.prepareStatement(query))
+        {
+            stmt.setString(1, playerId);
+            stmt.setString(2, itemName);
+
+            try (ResultSet rs = stmt.executeQuery())
+            {
+                if (rs.next())
+                {
+                    return rs.getInt("quantity");
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    private static void deleteItemFromInventory(Connection con, String playerId, String itemName) throws SQLException
+    {
+        String deleteQuery = "DELETE FROM Inventory WHERE player_id = ? AND items = ?";
+
+        try (PreparedStatement deleteStmt = con.prepareStatement(deleteQuery))
+        {
+            deleteStmt.setString(1, playerId);
+            deleteStmt.setString(2, itemName);
+            deleteStmt.executeUpdate();
         }
     }
 
